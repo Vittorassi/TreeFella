@@ -7,12 +7,16 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
+import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.Objects;
+import java.util.Random;
 
 public class BlockBreakEvent implements Listener {
 
@@ -57,14 +61,14 @@ public class BlockBreakEvent implements Listener {
                 )
             ) && !isPlayerPlacedBlock && p.isSneaking()
         ) {
-            this.checkNearbyBlocks(b, p);
+            this.checkNearbyBlocks(b, p, e);
 
         } else if (isPlayerPlacedBlock && TreeFella.LOGS.contains(b.getType())) {
             PlacedBlocks.get().set(path, null);
         }
     }
 
-    public void checkNearbyBlocks(Block block, Player player) {
+    public void checkNearbyBlocks(Block block, Player player, org.bukkit.event.block.BlockBreakEvent e) {
         int x = -1;
         int y = -1;
         int z = -1;
@@ -84,7 +88,17 @@ public class BlockBreakEvent implements Listener {
                     if (TreeFella.LOGS.contains(nearbyBlock.getType()) || TreeFella.ORES.contains(nearbyBlock.getType())) {
                         ItemStack tool = player.getInventory().getItemInMainHand();
 
-                        nearbyBlock.breakNaturally(tool);
+                        if (TreeFella.ORES_XP.containsKey(nearbyBlock.getType())) {
+                            int minXP = Objects.requireNonNull(TreeFella.ORES_XP.get(nearbyBlock.getType())).getMinXP();
+                            int maxXP = Objects.requireNonNull(TreeFella.ORES_XP.get(nearbyBlock.getType())).getMaxXP();
+
+                            int xp = (int) (Math.random() * (maxXP - minXP + 1)) + minXP;
+
+                            ExperienceOrb orb = e.getPlayer().getWorld().spawn(nearbyBlock.getLocation(), ExperienceOrb.class);
+                            orb.setExperience(xp);
+                        }
+                        
+						nearbyBlock.breakNaturally(tool);
 
                         int toolDurability = tool.getType().getMaxDurability();
 
@@ -93,7 +107,11 @@ public class BlockBreakEvent implements Listener {
                         Damageable dmg = (Damageable) meta;
 
                         if (dmg != null && dmg.getDamage() <= toolDurability) {
-                            dmg.setDamage(dmg.getDamage() + 1);
+                            // Apply Unbreaking enchantment
+                            int unbreakingLevel = tool.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.DURABILITY);
+                            if (unbreakingLevel == 0 || new Random().nextInt(unbreakingLevel + 1) == 0) {
+                                dmg.setDamage(dmg.getDamage() + 1);
+                            }
 
                             tool.setItemMeta(dmg);
 
@@ -104,7 +122,7 @@ public class BlockBreakEvent implements Listener {
                             break outerLoop;
                         }
 
-                        this.checkNearbyBlocks(nearbyBlock, player);
+                        this.checkNearbyBlocks(nearbyBlock, player, e);
 
                     }
 
