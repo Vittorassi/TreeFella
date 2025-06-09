@@ -55,7 +55,7 @@ public class BlockBreakEvent implements Listener {
                 ) || (
                     PICKAXES.contains(itemInHand.getType()) && TreeFella.ORES.contains(b.getType())
                 )
-            ) && !isPlayerPlacedBlock && p.isSneaking()
+            ) && !isPlayerPlacedBlock && p.isSprinting()
         ) {
             this.checkNearbyBlocks(b, p);
 
