@@ -1,0 +1,9 @@
+# Build output
+target/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# CLAUDE.md
+CLAUDE.md

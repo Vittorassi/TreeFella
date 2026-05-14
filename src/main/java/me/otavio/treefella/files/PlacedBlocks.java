@@ -10,7 +10,6 @@ import java.io.IOException;
 public class PlacedBlocks {
 
     private static File file;
-
     private static FileConfiguration customFile;
 
     public static void setup() {
@@ -20,11 +19,24 @@ public class PlacedBlocks {
             try {
                 file.createNewFile();
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                Bukkit.getLogger().warning("TreeFella: could not create PlacedBlocks.yml: " + e.getMessage());
             }
         }
 
         customFile = YamlConfiguration.loadConfiguration(file);
+    }
+
+    public static void migrateKeys(String defaultWorldName) {
+        boolean changed = false;
+        for (String key : customFile.getKeys(false)) {
+            if (key.split(",").length == 3) {
+                int value = customFile.getInt(key);
+                customFile.set(key, null);
+                customFile.set(defaultWorldName + "," + key, value);
+                changed = true;
+            }
+        }
+        if (changed) save();
     }
 
     public static FileConfiguration get() {
@@ -35,7 +47,7 @@ public class PlacedBlocks {
         try {
             customFile.save(file);
         } catch (IOException e) {
-            System.out.println("Couldn't save file");
+            Bukkit.getLogger().warning("TreeFella: could not save PlacedBlocks.yml");
         }
     }
 
