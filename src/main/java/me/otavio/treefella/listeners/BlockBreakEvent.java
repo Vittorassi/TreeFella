@@ -1,10 +1,8 @@
 package me.otavio.treefella.listeners;
 
-import com.google.common.collect.ImmutableList;
 import me.otavio.treefella.TreeFella;
 import me.otavio.treefella.files.PlacedBlocks;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -14,25 +12,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
+
 public class BlockBreakEvent implements Listener {
-
-    private final ImmutableList<Material> AXES = ImmutableList.of(
-            Material.DIAMOND_AXE,
-            Material.GOLDEN_AXE,
-            Material.IRON_AXE,
-            Material.STONE_AXE,
-            Material.NETHERITE_AXE,
-            Material.WOODEN_AXE
-    );
-
-    private final ImmutableList<Material> PICKAXES = ImmutableList.of(
-            Material.DIAMOND_PICKAXE,
-            Material.GOLDEN_PICKAXE,
-            Material.IRON_PICKAXE,
-            Material.STONE_PICKAXE,
-            Material.NETHERITE_PICKAXE,
-            Material.WOODEN_PICKAXE
-    );
 
     @EventHandler
     public void onBlockBreakEvent(org.bukkit.event.block.BlockBreakEvent e) {
@@ -40,84 +25,65 @@ public class BlockBreakEvent implements Listener {
         ItemStack itemInHand = p.getInventory().getItemInMainHand();
         Block b = e.getBlock();
 
-        int blockX = b.getLocation().getBlockX();
-        int blockY = b.getLocation().getBlockY();
-        int blockZ = b.getLocation().getBlockZ();
-
-        String path = blockX + "," + blockY + "," + blockZ;
+        Location loc = b.getLocation();
+        String path = b.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
 
         boolean isPlayerPlacedBlock = PlacedBlocks.get().isInt(path);
 
         if (
             (
-                (
-                    AXES.contains(itemInHand.getType()) && TreeFella.LOGS.contains(b.getType())
-                ) || (
-                    PICKAXES.contains(itemInHand.getType()) && TreeFella.ORES.contains(b.getType())
-                )
+                (TreeFella.AXES.contains(itemInHand.getType()) && TreeFella.LOGS.contains(b.getType())) ||
+                (TreeFella.PICKAXES.contains(itemInHand.getType()) && TreeFella.ORES.contains(b.getType()))
             ) && !isPlayerPlacedBlock && p.isSneaking()
         ) {
-            this.checkNearbyBlocks(b, p);
+            checkNearbyBlocks(b, p);
 
-        } else if (isPlayerPlacedBlock && TreeFella.LOGS.contains(b.getType())) {
+        } else if (isPlayerPlacedBlock &&
+                   (TreeFella.LOGS.contains(b.getType()) || TreeFella.ORES.contains(b.getType()))) {
             PlacedBlocks.get().set(path, null);
+            PlacedBlocks.save();
         }
     }
 
-    public void checkNearbyBlocks(Block block, Player player) {
-        int x = -1;
-        int y = -1;
-        int z = -1;
+    private void checkNearbyBlocks(Block origin, Player player) {
+        Queue<Block> queue = new LinkedList<>();
+        Set<Block> visited = new HashSet<>();
+        queue.add(origin);
+        visited.add(origin);
 
-        outerLoop:
-        for (int k = 0; k < 3; k++) {
-
-            for (int i = 0; i < 3; i++) {
-
-                for (int j = 0; j < 3; j++) {
-                    Location center = block.getLocation().clone();
-
-                    center.add(x, y, z);
-
-                    Block nearbyBlock = center.getBlock();
-
-                    if (TreeFella.LOGS.contains(nearbyBlock.getType()) || TreeFella.ORES.contains(nearbyBlock.getType())) {
+        while (!queue.isEmpty()) {
+            Block block = queue.poll();
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        if (dx == 0 && dy == 0 && dz == 0) continue;
+                        Block nearby = block.getRelative(dx, dy, dz);
+                        if (visited.contains(nearby)) continue;
+                        if (!TreeFella.LOGS.contains(nearby.getType()) && !TreeFella.ORES.contains(nearby.getType())) continue;
+                        visited.add(nearby);
                         ItemStack tool = player.getInventory().getItemInMainHand();
-
-                        nearbyBlock.breakNaturally(tool);
-
-                        int toolDurability = tool.getType().getMaxDurability();
-
-                        ItemMeta meta = tool.getItemMeta();
-
-                        Damageable dmg = (Damageable) meta;
-
-                        if (dmg != null && dmg.getDamage() <= toolDurability) {
-                            dmg.setDamage(dmg.getDamage() + 1);
-
-                            tool.setItemMeta(dmg);
-
-                            player.getInventory().setItemInMainHand(tool);
-                        } else {
-                            player.getInventory().setItemInMainHand(null);
-                            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1F, 1F);
-                            break outerLoop;
-                        }
-
-                        this.checkNearbyBlocks(nearbyBlock, player);
-
+                        nearby.breakNaturally(tool);
+                        if (!damageTool(player, tool)) return;
+                        queue.add(nearby);
                     }
-
-                    z++;
                 }
-
-                x++;
-                z = -1;
             }
+        }
+    }
 
-            y++;
-            x = -1;
-            z = -1;
+    private boolean damageTool(Player player, ItemStack tool) {
+        int maxDurability = tool.getType().getMaxDurability();
+        ItemMeta meta = tool.getItemMeta();
+        if (!(meta instanceof Damageable dmg)) return true;
+        if (dmg.getDamage() < maxDurability) {
+            dmg.setDamage(dmg.getDamage() + 1);
+            tool.setItemMeta(dmg);
+            player.getInventory().setItemInMainHand(tool);
+            return true;
+        } else {
+            player.getInventory().setItemInMainHand(null);
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1F, 1F);
+            return false;
         }
     }
 }

@@ -18,6 +18,7 @@ public final class TreeFella extends JavaPlugin {
             Material.SPRUCE_LOG,
             Material.DARK_OAK_LOG,
             Material.CHERRY_LOG,
+            Material.PALE_OAK_LOG,
             Material.WARPED_STEM,
             Material.CRIMSON_STEM
     );
@@ -44,14 +45,32 @@ public final class TreeFella extends JavaPlugin {
             Material.ANCIENT_DEBRIS
     );
 
+    public static final ImmutableList<Material> AXES = ImmutableList.of(
+            Material.DIAMOND_AXE,
+            Material.GOLDEN_AXE,
+            Material.IRON_AXE,
+            Material.STONE_AXE,
+            Material.NETHERITE_AXE,
+            Material.WOODEN_AXE
+    );
+
+    public static final ImmutableList<Material> PICKAXES = ImmutableList.of(
+            Material.DIAMOND_PICKAXE,
+            Material.GOLDEN_PICKAXE,
+            Material.IRON_PICKAXE,
+            Material.STONE_PICKAXE,
+            Material.NETHERITE_PICKAXE,
+            Material.WOODEN_PICKAXE
+    );
+
     @Override
     public void onEnable() {
-        // Plugin startup logic
         this.getConfig().options().copyDefaults(true);
         this.saveConfig();
 
         PlacedBlocks.setup();
         PlacedBlocks.get().options().copyDefaults(true);
+        PlacedBlocks.migrateKeys(getServer().getWorlds().get(0).getName());
         PlacedBlocks.save();
 
         this.getServer().getPluginManager().registerEvents(new BlockPlaceEvent(), this);
