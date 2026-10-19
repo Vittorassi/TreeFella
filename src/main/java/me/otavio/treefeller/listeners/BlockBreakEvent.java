@@ -1,8 +1,5 @@
-package me.otavio.treefella.listeners;
+package me.otavio.treefeller.listeners;
 
-import com.google.common.collect.ImmutableList;
-import me.otavio.treefella.TreeFella;
-import me.otavio.treefella.files.PlacedBlocks;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -14,6 +11,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import com.google.common.collect.ImmutableList;
+
+import me.otavio.treefeller.TreeFeller;
+import me.otavio.treefeller.files.PlacedBlocks;
+
 public class BlockBreakEvent implements Listener {
 
     private final ImmutableList<Material> AXES = ImmutableList.of(
@@ -22,7 +24,8 @@ public class BlockBreakEvent implements Listener {
             Material.IRON_AXE,
             Material.STONE_AXE,
             Material.NETHERITE_AXE,
-            Material.WOODEN_AXE
+            Material.WOODEN_AXE,
+            Material.COPPER_AXE
     );
 
     private final ImmutableList<Material> PICKAXES = ImmutableList.of(
@@ -31,7 +34,8 @@ public class BlockBreakEvent implements Listener {
             Material.IRON_PICKAXE,
             Material.STONE_PICKAXE,
             Material.NETHERITE_PICKAXE,
-            Material.WOODEN_PICKAXE
+            Material.WOODEN_PICKAXE,
+            Material.COPPER_PICKAXE
     );
 
     @EventHandler
@@ -51,15 +55,15 @@ public class BlockBreakEvent implements Listener {
         if (
             (
                 (
-                    AXES.contains(itemInHand.getType()) && TreeFella.LOGS.contains(b.getType())
+                    AXES.contains(itemInHand.getType()) && TreeFeller.LOGS.contains(b.getType())
                 ) || (
-                    PICKAXES.contains(itemInHand.getType()) && TreeFella.ORES.contains(b.getType())
+                    PICKAXES.contains(itemInHand.getType()) && TreeFeller.ORES.contains(b.getType())
                 )
             ) && !isPlayerPlacedBlock && p.isSneaking()
         ) {
             this.checkNearbyBlocks(b, p);
 
-        } else if (isPlayerPlacedBlock && TreeFella.LOGS.contains(b.getType())) {
+        } else if (isPlayerPlacedBlock && TreeFeller.LOGS.contains(b.getType())) {
             PlacedBlocks.get().set(path, null);
         }
     }
@@ -81,7 +85,7 @@ public class BlockBreakEvent implements Listener {
 
                     Block nearbyBlock = center.getBlock();
 
-                    if (TreeFella.LOGS.contains(nearbyBlock.getType()) || TreeFella.ORES.contains(nearbyBlock.getType())) {
+                    if (TreeFeller.LOGS.contains(nearbyBlock.getType()) || TreeFeller.ORES.contains(nearbyBlock.getType())) {
                         ItemStack tool = player.getInventory().getItemInMainHand();
 
                         nearbyBlock.breakNaturally(tool);

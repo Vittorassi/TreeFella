@@ -1,0 +1,12 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+
+# Build output & targets
+/target/
+
+# IntelliJ IDEA
+/.idea/
+
+# VS Code local workspace settings
+/.vscode/

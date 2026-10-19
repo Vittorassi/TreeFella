@@ -1,13 +1,13 @@
-package me.otavio.treefella;
+package me.otavio.treefeller;
 
 import com.google.common.collect.ImmutableList;
-import me.otavio.treefella.files.PlacedBlocks;
-import me.otavio.treefella.listeners.BlockBreakEvent;
-import me.otavio.treefella.listeners.BlockPlaceEvent;
+import me.otavio.treefeller.files.PlacedBlocks;
+import me.otavio.treefeller.listeners.BlockBreakEvent;
+import me.otavio.treefeller.listeners.BlockPlaceEvent;
 import org.bukkit.Material;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class TreeFella extends JavaPlugin {
+public final class TreeFeller extends JavaPlugin {
 
     public static final ImmutableList<Material> LOGS = ImmutableList.of(
             Material.ACACIA_LOG,
@@ -19,7 +19,9 @@ public final class TreeFella extends JavaPlugin {
             Material.DARK_OAK_LOG,
             Material.CHERRY_LOG,
             Material.WARPED_STEM,
-            Material.CRIMSON_STEM
+            Material.CRIMSON_STEM,
+            Material.POPLAR_LOG,
+            Material.PALE_OAK_LOG
     );
 
     public static final ImmutableList<Material> ORES = ImmutableList.of(
